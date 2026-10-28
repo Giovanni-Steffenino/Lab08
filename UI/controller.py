@@ -13,8 +13,32 @@ class Controller:
         self.fillIDMap()
 
     def handleWorstCase(self, e):
-        # TO FILL
-        pass
+        self._view._txtOut.controls.clear()     # pulisco l'output precedente
+        # 1. NERC selezionato
+        nercValue = self._view._ddNerc.value
+        if nercValue is None:
+            self._view.create_alert("Seleziona un NERC!")
+            return
+        nerc = self._idMap[nercValue]           # da stringa a oggetto Nerc
+        # 2. Validazione di X (anni) e Y (ore)
+        try:
+            maxY = int(self._view._txtYears.value)
+            maxH = int(self._view._txtHours.value)
+        except ValueError:
+            self._view.create_alert("Anni e ore devono essere numeri interi!")
+            return
+        if maxY <= 0 or maxH <= 0:
+            self._view.create_alert("Anni e ore devono essere maggiori di zero!")
+            return
+        # 3. Chiamata al Model
+        sol, clienti = self._model.worstCase(nerc, maxY, maxH)
+        ore = self._model.sumHours(sol)
+        # 4. Stampa dei risultati
+        self._view._txtOut.controls.append(ft.Text(f"Tot people affected: {clienti}"))
+        self._view._txtOut.controls.append(ft.Text(f"Tot hours of outage: {ore:.2f}"))
+        for ev in sol:
+            self._view._txtOut.controls.append(ft.Text(str(ev)))
+        self._view.update_page()
 
     def fillDD(self):
         nercList = self._model.listNerc
